@@ -73,7 +73,7 @@ for (const [type, constructor, defaultPort] of [
       new constructor({
         target: stripV6Brackets(argv.target),
         targetPort: argv.targetPort,
-        port: url.port || defaultPort,
+        port: Number.parseInt(url.port) || defaultPort,
         address: stripV6Brackets(url.hostname)
       })
     );
