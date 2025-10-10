@@ -4,6 +4,7 @@ import 'console.table';
 import argv from './lib/argv.js';
 import net from 'node:net';
 import packageInfo from './lib/packageInfo.js';
+import stripV6Brackets from './lib/stripV6Brackets.js';
 import UdpServer from './lib/UdpServer.js';
 import WsServer from './lib/WsServer.js';
 import WwwServer from './lib/WwwServer.js';
@@ -70,10 +71,10 @@ for (const [type, constructor, defaultPort] of [
     const url = new URL(`fake-protocol://${host || '127.0.0.1'}`);
     servers.add(
       new constructor({
-        target: argv.target,
+        target: stripV6Brackets(argv.target),
         targetPort: argv.targetPort,
         port: url.port || defaultPort,
-        address: url.hostname
+        address: stripV6Brackets(url.hostname)
       })
     );
   }
