@@ -136,7 +136,7 @@ jobs:
         run: |
           set -euo pipefail
           docker save x32-proxy:${{ steps.meta.outputs.version }} \
-            | gzip -9n > "${{ steps.meta.outputs.outdir }}/x32-proxy-${{ steps.meta.outputs.version }}.tar.gz"
+            | gzip -9n > "${{ steps.meta.outputs.outdir }}/x32-proxy-${{ steps.meta.outputs.version }}-docker.tar.gz"
           ls -lh "${{ steps.meta.outputs.outdir }}"/*.tar.gz
 
       - name: Upload Docker artifact
