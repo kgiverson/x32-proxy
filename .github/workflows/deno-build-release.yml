@@ -1,0 +1,132 @@
+name: Build & Release (Deno)
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write  # create releases & upload assets
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BIN_NAME: x32-proxy
+
+jobs:
+  build:
+    name: Build (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,     platform: x86_64-unknown-linux-gnu, ext: "",     packext: "tar.gz", label: "Linux x64" }
+          - { os: ubuntu-24.04-arm,  platform: aarch64-unknown-linux-gnu, ext: "",    packext: "tar.gz", label: "Linux ARM64" }
+          - { os: macos-latest,      platform: aarch64-apple-darwin,      ext: "",    packext: "tar.gz", label: "macOS (Apple Silicon)" }
+          - { os: windows-latest,    platform: x86_64-pc-windows-msvc,    ext: ".exe", packext: "zip",    label: "Windows x64" }
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies (deno)
+        shell: bash
+        run: |
+          deno install
+
+      - name: Prepare names
+        id: names
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          OUTDIR="dist"
+          BIN="${{ env.BIN_NAME }}${{ matrix.ext }}"
+          ARCHIVE="${{ env.BIN_NAME }}-${VERSION}-${{ matrix.platform }}.${{ matrix.packext }}"
+          mkdir -p "$OUTDIR"
+          {
+            echo "version=$VERSION"
+            echo "outdir=$OUTDIR"
+            echo "bin=$BIN"
+            echo "archive=$ARCHIVE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Compile (non-Windows)
+        if: runner.os != 'Windows'
+        run: |
+          deno compile \
+            --allow-env \
+            --allow-net \
+            --allow-read \
+            --target ${{ matrix.platform }} \
+            --output "${{ steps.names.outputs.outdir }}/${{ steps.names.outputs.bin }}" \
+            index.js
+          chmod +x "${{ steps.names.outputs.outdir }}/${{ steps.names.outputs.bin }}"
+
+      - name: Compile (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          deno compile `
+            --allow-env `
+            --allow-net `
+            --allow-read `
+            --target ${{ matrix.platform }} `
+            --output "${{ steps.names.outputs.outdir }}\${{ steps.names.outputs.bin }}" `
+            index.js
+
+      - name: Package (tar.gz)
+        if: matrix.packext == 'tar.gz'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "${{ steps.names.outputs.outdir }}"
+          tar -czf "${{ steps.names.outputs.archive }}" "${{ steps.names.outputs.bin }}"
+
+      - name: Package (zip)
+        if: matrix.packext == 'zip'
+        shell: pwsh
+        run: |
+          Set-StrictMode -Version Latest
+          $outdir = "${{ steps.names.outputs.outdir }}"
+          $bin    = "${{ steps.names.outputs.bin }}"
+          $archive= "${{ steps.names.outputs.archive }}"
+          Compress-Archive -Path (Join-Path $outdir $bin) -DestinationPath (Join-Path $outdir $archive) -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}
+          path: |
+            ${{ steps.names.outputs.outdir }}/${{ steps.names.outputs.bin }}
+            ${{ steps.names.outputs.outdir }}/${{ steps.names.outputs.archive }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+          draft: false
+          prerelease: false
