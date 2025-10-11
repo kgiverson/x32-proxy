@@ -118,7 +118,7 @@ You can rewrite the model name of your mixer with this option.  It might be usef
 If the proxy hasn't heard from the client in awhile (5 seconds by default), it will remove them from the list of active clients and will close the socket that the X32 would normally respond on.  You can adjust this timeout if you wish.  There should be no practical reason to change this.  If a client is assumed inactive, its upstream socket is closed.  A new one will be reopened immediately if a new packet is received from the client.
 
 ## Example: IPv6 VPN with stock X32 Edit
-Unfortunately, the mixers don't support IPv6, and [probably never will](https://community.musictribe.com/discussions/89151/166716/ipv6-support-for-osc-control).  Even more unfortunate is that the standard X32 Edit/X-Air Edit applications are hardcoded to only use IPv4 addresses.  They doesn't even support hostnames.  What are you to do if you must access your mixer over an IPv6-only VPN?  You can run this proxy utility on two sides of it.
+Unfortunately, the mixers don't support IPv6, and [probably never will](https://community.musictribe.com/discussions/89151/166716/ipv6-support-for-osc-control).  Even more unfortunate is that the standard X32 Edit/X-Air Edit applications are hardcoded to only use IPv4 addresses.  They don't even support hostnames.  What are you to do if you must access your mixer over an IPv6-only VPN?  You can run this proxy utility on two sides of it.
 
 Example Address:
 
