@@ -131,19 +131,19 @@ jobs:
         run: |
           docker build --pull -t x32-proxy:${{ steps.meta.outputs.version }} .
 
-      - name: Save versioned tarball
+      - name: Save versioned tarball (gzip)
         shell: bash
         run: |
           set -euo pipefail
-          docker save x32-proxy:${{ steps.meta.outputs.version }} > \
-            "${{ steps.meta.outputs.outdir }}/x32-proxy-${{ steps.meta.outputs.version }}.tar"
-          ls -lh "${{ steps.meta.outputs.outdir }}"/*.tar
+          docker save x32-proxy:${{ steps.meta.outputs.version }} \
+            | gzip -9n > "${{ steps.meta.outputs.outdir }}/x32-proxy-${{ steps.meta.outputs.version }}.tar.gz"
+          ls -lh "${{ steps.meta.outputs.outdir }}"/*.tar.gz
 
       - name: Upload Docker artifact
         uses: actions/upload-artifact@v4
         with:
           name: docker-image
-          path: ${{ steps.meta.outputs.outdir }}/*.tar
+          path: ${{ steps.meta.outputs.outdir }}/*.tar.gz
 
   release:
     name: Create GitHub Release
