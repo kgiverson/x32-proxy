@@ -109,9 +109,45 @@ jobs:
             ${{ steps.names.outputs.outdir }}/${{ steps.names.outputs.bin }}
             ${{ steps.names.outputs.outdir }}/${{ steps.names.outputs.archive }}
 
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute version & outdir
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          OUTDIR="dist"
+          mkdir -p "$OUTDIR"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "outdir=$OUTDIR"   >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image
+        run: |
+          docker build --pull -t x32-proxy:${{ steps.meta.outputs.version }} .
+
+      - name: Save versioned tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker save x32-proxy:${{ steps.meta.outputs.version }} > \
+            "${{ steps.meta.outputs.outdir }}/x32-proxy-${{ steps.meta.outputs.version }}.tar"
+          ls -lh "${{ steps.meta.outputs.outdir }}"/*.tar
+
+      - name: Upload Docker artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ steps.meta.outputs.outdir }}/*.tar
+
   release:
     name: Create GitHub Release
-    needs: build
+    needs: [build, docker]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
