@@ -1,7 +1,7 @@
 import dgram from 'node:dgram';
 import { Buffer } from 'node:buffer';
 
-export class MockMixer {
+export default class MockMixer {
   constructor(port = 10023, address = '127.0.0.1') {
     this.port = port;
     this.address = address;
@@ -12,8 +12,7 @@ export class MockMixer {
   start() {
     return new Promise((resolve, reject) => {
       this.socket.on('error', (err) => {
-        console.error(`[MockMixer] Server error:
-${err.stack}`);
+        console.error('[MockMixer] Server error', err);
         this.socket.close();
         this.running = false;
         reject(err);
@@ -25,7 +24,8 @@ ${err.stack}`);
 
       this.socket.bind(this.port, this.address, () => {
         this.running = true;
-        console.log(`[MockMixer] Listening on ${this.address}:${this.port}`);
+        const addr = this.socket.address();
+        console.log(`[MockMixer] Listening on ${addr.address}:${addr.port}`);
         resolve();
       });
     });

@@ -42,7 +42,7 @@ function createXInfoPacket(ip, name, model, version) {
 
 test('Client.sendDownstream rewriting logic', async (t) => {
   const mockServer = {
-    address: '10.0.0.1' // The "Proxy IP"
+    address: '192.0.2.1' // The "Proxy IP" (TEST-NET-1)
   };
 
   const client = new Client({
@@ -57,14 +57,14 @@ test('Client.sendDownstream rewriting logic', async (t) => {
     argv.disableStatusRewrite = false;
     argv.name = 'Proxy-Mixer';
     
-    const originalPacket = createStatusPacket('active', '192.168.1.100', 'Real-X32');
+    const originalPacket = createStatusPacket('active', '198.51.100.1', 'Real-X32'); // TEST-NET-2
     const processedPacket = client.sendDownstream(originalPacket);
 
-    // Should contain Proxy IP (10.0.0.1) and Proxy Name (Proxy-Mixer)
+    // Should contain Proxy IP (192.0.2.1) and Proxy Name (Proxy-Mixer)
     const processedString = processedPacket.toString();
-    assert.ok(processedString.includes('10.0.0.1'), 'Packet should contain proxy IP');
+    assert.ok(processedString.includes('192.0.2.1'), 'Packet should contain proxy IP');
     assert.ok(processedString.includes('Proxy-Mixer'), 'Packet should contain proxy name');
-    assert.ok(!processedString.includes('192.168.1.100'), 'Packet should NOT contain original IP');
+    assert.ok(!processedString.includes('198.51.100.1'), 'Packet should NOT contain original IP');
   });
 
   await t.test('rewrites /xinfo packet with proxy info', () => {
@@ -72,11 +72,11 @@ test('Client.sendDownstream rewriting logic', async (t) => {
     argv.name = 'Proxy-X32';
     argv.model = 'X32-Custom';
 
-    const originalPacket = createXInfoPacket('192.168.1.100', 'Real-X32', 'X32R', '4.06');
+    const originalPacket = createXInfoPacket('198.51.100.1', 'Real-X32', 'X32R', '4.06');
     const processedPacket = client.sendDownstream(originalPacket);
 
     const processedString = processedPacket.toString();
-    assert.ok(processedString.includes('10.0.0.1'), 'Packet should contain proxy IP');
+    assert.ok(processedString.includes('192.0.2.1'), 'Packet should contain proxy IP');
     assert.ok(processedString.includes('Proxy-X32'), 'Packet should contain proxy name');
     assert.ok(processedString.includes('X32-Custom'), 'Packet should contain proxy model');
   });
@@ -94,7 +94,7 @@ test('Client.sendDownstream rewriting logic', async (t) => {
 
   await t.test('respects disableStatusRewrite flag', () => {
     argv.disableStatusRewrite = true;
-    const originalPacket = createStatusPacket('active', '192.168.1.100', 'Real-X32');
+    const originalPacket = createStatusPacket('active', '198.51.100.1', 'Real-X32');
     const processedPacket = client.sendDownstream(originalPacket);
 
     assert.deepStrictEqual(processedPacket, originalPacket, 'Packet should NOT be rewritten when disabled');

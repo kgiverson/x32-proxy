@@ -15,18 +15,20 @@ function oscString(str) {
 
 test('UDP Proxy Integration', async (t) => {
   console.log('Starting UDP Proxy Integration test...');
-  const MIXER_PORT = 10025;
-  const PROXY_PORT = 10026;
   const BIND_ADDR = '127.0.0.1';
 
-  const { MockMixer } = await import('../mock-mixer.js');
-  const mixer = new MockMixer(MIXER_PORT, BIND_ADDR);
+  const { default: MockMixer } = await import('../MockMixer.js');
+  
+  // Use port 0 to let the OS assign a random available port
+  const mixer = new MockMixer(0, BIND_ADDR);
   await mixer.start();
-  console.log('Mixer started');
+  
+  const MIXER_PORT = mixer.socket.address().port;
+  console.log(`Mixer started on port ${MIXER_PORT}`);
 
   const proxy = new UdpServer({
     address: BIND_ADDR,
-    port: PROXY_PORT,
+    port: 0, // Let OS assign port
     target: BIND_ADDR,
     targetPort: MIXER_PORT,
     disableSubscriptionPool: true,
@@ -39,7 +41,9 @@ test('UDP Proxy Integration', async (t) => {
     if (!proxy.listening) {
       await new Promise(resolve => proxy.addEventListener('listening', resolve, { once: true }));
     }
-    console.log('Proxy is listening');
+    
+    const PROXY_PORT = proxy.server.address().port;
+    console.log(`Proxy is listening on port ${PROXY_PORT}`);
 
     await t.test('proxies /status and rewrites IP', async () => {
       console.log('Running subtest: proxies /status and rewrites IP');
