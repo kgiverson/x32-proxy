@@ -141,6 +141,28 @@ x32-proxy --udp --target [2001:0db8::19aa]:5035
 
 Now, on PC2, you can open your software and connect to `127.0.0.1` with X32 Edit as if you were directly connected to the console.
 
+# Testing
+
+This project includes a suite of unit and integration tests to ensure protocol compliance and reliability.
+
+To run all tests:
+
+```bash
+npm test
+```
+
+To run only unit tests:
+
+```bash
+npm run test:unit
+```
+
+To run only integration tests (requires a mock mixer simulation):
+
+```bash
+npm run test:integration
+```
+
 # Docker
 
 This application also works well under Docker, which can be useful for running on appliances like a Synology NAS.

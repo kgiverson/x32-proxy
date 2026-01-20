@@ -27,6 +27,11 @@
     "/index.js",
     "/lib"
   ],
+  "scripts": {
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "node --env-file=test/.env --test test/unit/*.test.js",
+    "test:integration": "node --env-file=test/.env test/run-integration.js"
+  },
   "devDependencies": {
     "@types/node": "^24.7.1"
   }
